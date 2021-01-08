@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-api-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hipstergram-search
+  template:
+    metadata:
+      labels:
+        app: hipstergram-search
+    spec:
+      containers:
+        - image: klemenstanic/search-api:latest
+          name: search-api
+          env:
+            - name: DB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: db-connection
+                  key: db-connection-url-users-api
+            - name: LOGS_URI 
+              valueFrom:
+                secretKeyRef:
+                  name: log-connection 
+                  key: log-connection-url 
+            - name: LOGS_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: log-connection
+                  key: log-connection-port
+          ports:
+            - containerPort: 8080
+              name: server
+              protocol: TCP
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: search-api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      protocol: TCP
+      targetPort: server
+  selector:
+    app: hipstergram-search
